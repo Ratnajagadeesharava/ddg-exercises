@@ -19,19 +19,25 @@ void SimplicialComplexOperators::assignElementIndices() {
     geometry->requireEdgeIndices();
     geometry->requireFaceIndices();
 
+
     // You can set the index field of a vertex via geometry->vertexIndices[v], where v is a Vertex object (or an
     // integer). Similarly you can do edges and faces via geometry->edgeIndices, geometry->faceIndices, like so:
     size_t idx = 0;
     for (Vertex v : mesh->vertices()) {
         idx = geometry->vertexIndices[v];
+        idx++;
     }
+    idx= 0;
 
     for (Edge e : mesh->edges()) {
         idx = geometry->edgeIndices[e];
+        idx++;
     }
+    idx = 0;
 
     for (Face f : mesh->faces()) {
         idx = geometry->faceIndices[f];
+        idx++;
     }
 
     // You can more easily get the indices of mesh elements using the function getIndex(), albeit less efficiently and
@@ -40,9 +46,10 @@ void SimplicialComplexOperators::assignElementIndices() {
     //      v.getIndex()
     //
     // where v can be a Vertex, Edge, Face, Halfedge, etc. For example:
-
+    idx = 0;
     for (Vertex v : mesh->vertices()) {
         idx = v.getIndex(); // == geometry->vertexIndices[v])
+        idx++;
     }
 
     // Geometry Central already sets the indices for us, though, so this function is just here for demonstration.
@@ -60,8 +67,19 @@ SparseMatrix<size_t> SimplicialComplexOperators::buildVertexEdgeAdjacencyMatrix(
     // TODO
     // Note: You can build an Eigen sparse matrix from triplets, then return it as a Geometry Central SparseMatrix.
     // See <https://eigen.tuxfamily.org/dox/group__TutorialSparse.html> for documentation.
+    int rows =mesh->nEdges();
+    int cols = mesh->nVertices();
+    SparseMatrix<size_t> vertexEdgeMatrix(rows,cols);
+    for (auto edge : mesh->edges()) {
+		int eidx = edge.getIndex();
+        int  v1idx = edge.firstVertex().getIndex();
+        int v2idx = edge.secondVertex().getIndex();
 
-    return identityMatrix<size_t>(1); // placeholder
+        vertexEdgeMatrix.insert(eidx,v1idx) = 1;
+        vertexEdgeMatrix.insert(eidx,v2idx) = 1;
+
+	}
+    return vertexEdgeMatrix; // placeholder
 }
 
 /*
@@ -73,7 +91,17 @@ SparseMatrix<size_t> SimplicialComplexOperators::buildVertexEdgeAdjacencyMatrix(
 SparseMatrix<size_t> SimplicialComplexOperators::buildFaceEdgeAdjacencyMatrix() const {
 
     // TODO
-    return identityMatrix<size_t>(1); // placeholder
+    int rows = mesh->nFaces();
+    int cols = mesh->nEdges();
+    SparseMatrix<size_t> edgeFaceMatrix(rows,cols);
+    for (auto face : mesh->faces()) {
+        int fidx = face.getIndex();
+        for (auto edge : face.adjacentEdges()) {
+            int eidx = edge.getIndex();
+            edgeFaceMatrix.insert(fidx,eidx) = 1;
+        }
+    }
+    return edgeFaceMatrix; // placeholder
 }
 
 /*
