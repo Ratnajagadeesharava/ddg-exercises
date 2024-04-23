@@ -101,19 +101,29 @@ SparseMatrix<size_t> SimplicialComplexOperators::buildFaceEdgeAdjacencyMatrix() 
             edgeFaceMatrix.insert(fidx,eidx) = 1;
         }
     }
+
     return edgeFaceMatrix; // placeholder
 }
 
 /*
  * Construct a vector encoding the vertices in the selected subset of simplices.
  *
- * Input: Selected subset of simplices.
+ * we need to find if what vertices of this subset 
+ * Input: Selected subset buildVertexVector simplices.
  * Returns: Vector of length |V|, where |V| = # of vertices in the mesh.
  */
 Vector<size_t> SimplicialComplexOperators::buildVertexVector(const MeshSubset& subset) const {
 
-    // TODO
-    return Vector<size_t>::Zero(1);
+    Vector<size_t> v(mesh->nVertices());
+    for (int i = 0; i < mesh->nVertices(); i++) {
+        if (subset.vertices.count(i)) {
+            v[i] = 1;
+        } else {
+            v[i] = 0;
+        }
+    }
+    return v;
+    
 }
 
 /*
@@ -125,7 +135,16 @@ Vector<size_t> SimplicialComplexOperators::buildVertexVector(const MeshSubset& s
 Vector<size_t> SimplicialComplexOperators::buildEdgeVector(const MeshSubset& subset) const {
 
     // TODO
-    return Vector<size_t>::Zero(1);
+
+    Vector<size_t> edgeVectors(mesh->nEdges());
+    for (int i = 0; i < mesh->nEdges(); i++) {
+        if (subset.edges.count(i)) {
+            edgeVectors[i] = 1;
+        } else {
+            edgeVectors[i] = 0;
+        }
+    }
+    return edgeVectors;
 }
 
 /*
@@ -135,9 +154,15 @@ Vector<size_t> SimplicialComplexOperators::buildEdgeVector(const MeshSubset& sub
  * Returns: Vector of length |F|, where |F| = # of faces in mesh.
  */
 Vector<size_t> SimplicialComplexOperators::buildFaceVector(const MeshSubset& subset) const {
-
-    // TODO
-    return Vector<size_t>::Zero(1);
+    Vector<size_t> faceVectors(mesh->nFaces());
+    for (int i = 0; i < mesh->nFaces(); i++) {
+        if (subset.edges.count(i)) {
+            faceVectors[i] = 1;
+        } else {
+            faceVectors[i] = 0;
+        }
+    }
+    return faceVectors;
 }
 
 /*
@@ -147,9 +172,36 @@ Vector<size_t> SimplicialComplexOperators::buildFaceVector(const MeshSubset& sub
  * Returns: The star of the given subset.
  */
 MeshSubset SimplicialComplexOperators::star(const MeshSubset& subset) const {
+    
+    
+    //current set is already part of star
+    MeshSubset starSet(subset);
+     
+    //outerSize --> columns
+    //innerSize --> rows
 
+    int cols = A0.outerSize();
+    int rows = A0.innerSize();
+    for (auto vertex : subset.vertices) {
+        
+        /*starSet.addVertex(vertex);*/
+        for (int e = 0; e < mesh->nEdges(); e++) {
+            if (A0.coeff(e, vertex)) {
+                starSet.addEdge(e);
+            }
+        }
+        
+    }
+
+    for (auto edge : starSet.edges) {
+        for (int f = 0; f < mesh->nFaces(); f++) {
+            if (A1.coeff(f, edge)) {
+                starSet.addFace(f);
+            }
+        }
+    }
     // TODO
-    return subset; // placeholder
+    return starSet; // placeholder
 }
 
 
