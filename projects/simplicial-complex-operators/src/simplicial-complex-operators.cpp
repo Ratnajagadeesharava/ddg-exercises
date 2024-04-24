@@ -212,9 +212,24 @@ MeshSubset SimplicialComplexOperators::star(const MeshSubset& subset) const {
  * Returns: The closure of the given subset.
  */
 MeshSubset SimplicialComplexOperators::closure(const MeshSubset& subset) const {
+    MeshSubset closureSet(subset);
+    for (auto face : subset.faces) {
+        for (int i = 0; i < mesh->nEdges(); i++) {
+            if (A1.coeff(face, i)) {
+                closureSet.addEdge(i);
+            }
+        }
+    }
+    for (auto edge : closureSet.edges) {
+        for (int i = 0; i < mesh->nVertices(); i++) {
+            if (A0.coeff(edge, i)) {
+                closureSet.addVertex(i);
+            }
+        }
+    }
 
     // TODO
-    return subset; // placeholder
+    return closureSet; // placeholder
 }
 
 /*
